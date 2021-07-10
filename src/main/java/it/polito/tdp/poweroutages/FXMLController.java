@@ -5,9 +5,11 @@
 package it.polito.tdp.poweroutages;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
 import it.polito.tdp.poweroutages.model.Model;
 import it.polito.tdp.poweroutages.model.Nerc;
+import it.polito.tdp.poweroutages.model.PowerOutages;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -39,6 +41,60 @@ public class FXMLController {
     @FXML
     void doRun(ActionEvent event) {
     	txtResult.clear();
+    	
+    	Nerc nerc = this.cmbNerc.getValue();
+    	if(nerc == null) {
+    		txtResult.setText("Seleziona un nerc");
+    		return;
+    	}
+    	
+    	String s = txtYears.getText();
+    	Integer durataAnniMax;
+    	
+    	try {
+    		durataAnniMax = Integer.parseInt(s);
+    	}catch(NumberFormatException ne) {
+    		txtResult.setText("Devi inserire un numero di anni per la durata");
+    		return;
+    	}
+    	
+    	if(durataAnniMax<0) {
+    		txtResult.setText("Devi inserire un numero di anni positivo");
+    		return;
+    	}
+    	
+    	String st = txtHours.getText();
+    	Integer oreDisservizioMax;
+    	
+    	try {
+    		oreDisservizioMax = Integer.parseInt(st);
+    	}catch(NumberFormatException ne) {
+    		txtResult.setText("Devi inserire un numero di ore per il disservizio");
+    		return;
+    	}
+    	
+    	if(oreDisservizioMax<0) {
+    		txtResult.setText("Devi inserire un numero di ore positivo");
+    		return;
+    	}
+    	  	
+    	List<PowerOutages> result = this.model.calcola(nerc, durataAnniMax, oreDisservizioMax);
+    	    	
+    	if(result == null) {
+    		txtResult.setText("non ci sono blackout associati a quel nerc");
+    		return;
+    	}
+    	
+    	txtResult.appendText("Tot people affected: " + model.getMaxPersone() + "\n");
+		txtResult.appendText("Tot hours of outage: " + model.sumOutageHours() + "\n");
+    	
+    	for(PowerOutages pow : result) {
+    		txtResult.appendText(String.format("%d %s %s %d %d", pow.getAnnoInizio(), pow.getInizio(),
+					pow.getFine(), pow.getDurataMinuti(), pow.getClienti()));
+			txtResult.appendText("\n");
+    	}
+    	
+    	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -54,5 +110,6 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	this.cmbNerc.getItems().addAll(this.model.getNercList());
     }
 }
